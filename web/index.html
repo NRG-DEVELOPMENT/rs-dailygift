@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RS Daily Rewards</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="hidden">
+    <!-- Backdrop -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- Main Panel -->
+    <div class="panel">
+      <div class="glow-bg"></div>
+
+      <!-- Header -->
+      <header class="topbar">
+        <div class="top-left">
+          <div class="gift-btn">
+            <!-- Gift Icon SVG -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>
+          </div>
+          <div class="profile-pill">
+            <div class="avatar-icon">
+              <!-- User Icon SVG -->
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="profile-text">
+              <span class="pname">Citizen</span>
+              <span class="psub">Basic Plan</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-right">
+          <button class="btn ghost">Join Premium</button>
+          <button class="btn close" id="btnClose">
+            Close 
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <div class="hero">
+        <div class="hero-left">
+          <h1 class="title">
+            <span class="gradient-text">DAILY</span><br>
+            <span class="white-text">REWARDS</span>
+          </h1>
+          <p class="subtitle">Claim your daily gifts to build your streak and unlock exclusive premium rewards.</p>
+        </div>
+
+        <div class="hero-right">
+          <div class="tabs">
+            <button class="tab active" data-tab="rewards">Rewards</button>
+          </div>
+          
+          <div class="countdown-card">
+            <span class="cd-label">Next Reward In</span>
+            <div class="cd-row">
+              <span class="cd-val" id="uiCountdown">15:00:30</span>
+              <div class="cd-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content">
+        <!-- Left Rail -->
+        <div class="left-rail">
+          <div class="rail-item daily active">
+            <span class="rail-header">Basic</span>
+            <div class="rail-icon daily-icon">
+               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+            </div>
+            <span class="rail-footer">Daily Item</span>
+          </div>
+
+          <div class="rail-item premium">
+            <div class="premium-glow"></div>
+            <span class="rail-header blue">Premium</span>
+            <div class="rail-icon premium-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <span class="rail-footer blue-dim">VIP Access</span>
+          </div>
+        </div>
+
+        <!-- Rewards Flow -->
+        <div class="main-flow">
+          <div class="rewards-track-container">
+            <div class="nav-buttons">
+              <button class="nav-btn prev"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+              <button class="nav-btn next active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
+            
+            <div class="cards-scroller" id="cardsContainer">
+              <!-- Cards injected by JS -->
+            </div>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="footer">
+            <div class="streak-info">
+              <div class="streak-text">
+                <span class="streak-label">Current Streak</span>
+                <div class="streak-val">
+                  <span id="uiStreak">12</span> <span class="days">days</span>
+                </div>
+              </div>
+              <div class="streak-dots" id="streakDots">
+                <!-- Dots injected by JS -->
+              </div>
+            </div>
+
+            <button class="btn-claim" id="btnClaim" disabled>
+              <span id="btnClaimText">Claim Reward</span>
+              <svg id="btnClaimIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
