@@ -27,23 +27,7 @@ local function DetectFramework()
   end
 end
 
-local function SecondsUntilNextDay()
-  local now = os.time()
 
-  if Config.UtcDay then
-    local utc = os.date('!*t', now)
-    local secLeft = (23 - utc.hour) * 3600 + (59 - utc.min) * 60 + (60 - (utc.sec or 0))
-    if secLeft < 0 then secLeft = 0 end
-    return secLeft
-  end
-
-  local offsetSec = (Config.TimeOffsetMinutes or 0) * 60
-  local adjNow = now + offsetSec
-  local t = os.date('*t', adjNow)
-  local secLeft = (23 - t.hour) * 3600 + (59 - t.min) * 60 + (60 - (t.sec or 0))
-  if secLeft < 0 then secLeft = 0 end
-  return secLeft
-end
 
 local function GetIdentifier(src)
   local license = GetPlayerIdentifierByType(src, 'license')
@@ -60,16 +44,6 @@ local function GetDayKey()
   return os.date('%Y-%m-%d', now)
 end
 
-local function DayDiff(prevDay, nowDay)
-  if not prevDay or prevDay == '' then return nil end
-  local py, pm, pd = prevDay:match('^(%d+)%-(%d+)%-(%d+)$')
-  local ny, nm, nd = nowDay:match('^(%d+)%-(%d+)%-(%d+)$')
-  if not py or not ny then return nil end
-
-  local prev = os.time({ year = tonumber(py), month = tonumber(pm), day = tonumber(pd), hour = 0 })
-  local now  = os.time({ year = tonumber(ny), month = tonumber(nm), day = tonumber(nd), hour = 0 })
-  return math.floor((now - prev) / 86400)
-end
 
 local function GetMaxRewardIndex()
   local maxIndex = 0
@@ -92,15 +66,16 @@ local function DBFetch(identifier)
   return MySQL.single.await('SELECT * FROM rs_dailygift WHERE identifier = ?', { identifier })
 end
 
-local function DBUpsert(identifier, lastDay, streak, totalClaims)
+local function DBUpsert(identifier, lastDay, lastClaimTs, streak, totalClaims)
   MySQL.insert.await([[
-    INSERT INTO rs_dailygift (identifier, last_claim_day, streak, total_claims)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO rs_dailygift (identifier, last_claim_day, last_claim_ts, streak, total_claims)
+    VALUES (?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       last_claim_day = VALUES(last_claim_day),
-      streak = VALUES(streak),
-      total_claims = VALUES(total_claims)
-  ]], { identifier, lastDay, streak, totalClaims })
+      last_claim_ts  = VALUES(last_claim_ts),
+      streak         = VALUES(streak),
+      total_claims   = VALUES(total_claims)
+  ]], { identifier, lastDay, lastClaimTs, streak, totalClaims })
 end
 
 local function AddMoney(src, account, amount)
@@ -184,35 +159,43 @@ local function GetState(src)
 
   local row = DBFetch(identifier)
   local lastDay = row and row.last_claim_day or nil
+  local lastClaimTs = row and tonumber(row.last_claim_ts) or nil
   local streak = row and tonumber(row.streak) or 0
   local totalClaims = row and tonumber(row.total_claims) or 0
 
-  local claimedToday = (lastDay == today)
-  local canClaim = not claimedToday
+  local cooldown = (Config.ClaimCooldownHours or 24) * 3600
+  local now = os.time()
 
-  local diff = DayDiff(lastDay, today)
+  local canClaim = (not lastClaimTs) or (now >= (lastClaimTs + cooldown))
+  local nextRewardIn = canClaim and 0 or ((lastClaimTs + cooldown) - now)
+  if nextRewardIn < 0 then nextRewardIn = 0 end
+
+  -- Streak logic based on rolling 24h claims:
+  --  - if claimed again after cooldown but within 2x cooldown: streak + 1
+  --  - if too late: reset unless AllowLateStreak
   local nextStreak
-
-  if not lastDay or lastDay == '' then
+  if not lastClaimTs then
     nextStreak = 1
-  elseif diff == 0 then
-    nextStreak = streak
-  elseif diff == 1 then
-    nextStreak = math.min((streak or 0) + 1, Config.MaxStreak or 9999)
   else
-    nextStreak = Config.AllowLateStreak and math.min((streak or 0) + 1, Config.MaxStreak or 9999) or 1
+    local diffSec = now - lastClaimTs
+    if diffSec < cooldown then
+      nextStreak = streak
+    elseif diffSec < (cooldown * 2) then
+      nextStreak = math.min((streak or 0) + 1, Config.MaxStreak or 9999)
+    else
+      nextStreak = Config.AllowLateStreak and math.min((streak or 0) + 1, Config.MaxStreak or 9999) or 1
+    end
   end
 
   local rewardPack, rewardIndex = RewardForStreak(nextStreak)
-  local nextRewardIn = claimedToday and SecondsUntilNextDay() or 0
 
   return {
     playerName = GetPlayerName(src) or 'Citizen',
     today = today,
     lastClaimDay = lastDay,
+    lastClaimTs = lastClaimTs,
     streak = streak,
     totalClaims = totalClaims,
-    claimedToday = claimedToday,
     canClaim = canClaim,
     nextStreak = nextStreak,
     rewardIndex = rewardIndex,
@@ -220,7 +203,6 @@ local function GetState(src)
     schedule = BuildSchedule(),
     nextRewardIn = nextRewardIn,
   }
-
 end
 
 local CLAIM_COOLDOWN = {}
@@ -249,7 +231,7 @@ local function Claim(src)
     end
   end
 
-  DBUpsert(GetIdentifier(src), state.today, state.nextStreak or 1, (state.totalClaims or 0) + 1)
+  DBUpsert(GetIdentifier(src), state.today, os.time(), state.nextStreak or 1, (state.totalClaims or 0) + 1)
   return true, Config.Notify.success
 end
 

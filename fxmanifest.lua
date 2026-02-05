@@ -5,7 +5,7 @@ lua54 'yes'
 name 'rs_dailygift'
 author 'NRG Development'
 description 'Daily Gift'
-version '1.0.0'
+version '1.0.1'
 
 ui_page 'web/index.html'
 

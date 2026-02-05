@@ -19,6 +19,10 @@ Config.AllowLateStreak = false  -- if false: missing a day resets streak
 Config.MaxStreak = 30           -- cap streak growth
 Config.OneClaimPerDay = true
 
+-- Rolling cooldown (in hours) between claims.
+-- Set to 24 for once-per-24-hours.
+Config.ClaimCooldownHours = 24
+
 -- Reward table by day index (streak day).
 -- If streak exceeds table length, it will use the last entry.
 -- reward entries support:
